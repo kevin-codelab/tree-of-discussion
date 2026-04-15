@@ -77,6 +77,12 @@ capture-session --summary "..." --node <id> --change "..." --follow-up "..."
 - 需求全文 → Spec（tree 里只放摘要）
 - 不要把同一条信息同时写进 tree 和 Memory
 
+## Multi-session safety
+
+- 每个节点的 `updated` 字段精确到分钟。`upsert-node` 更新已有节点时会做乐观锁检查：如果文件在你读取后被别人改过，stderr 会报 WARNING。
+- 写入不会被阻断，但 WARNING 意味着你应该 review 这个节点是否有冲突。
+- 默认 `.discussion/` 在 `.gitignore` 里（单人无冲突）。团队共享时移出 gitignore，靠 Git + 乐观锁 warning 协作即可。
+
 ## Rules
 
 1. Agent 负责维护树，不甩给用户

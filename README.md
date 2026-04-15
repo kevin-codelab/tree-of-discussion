@@ -112,6 +112,24 @@ Body sections: `Summary`, `Why this branch exists`, `Next`, `Related sessions`
 [2026-04-15 10:05] upsert-node (update) | auth-choice: status: active → accepted
 ```
 
+## Multi-session conflict detection
+
+By default `.discussion/` is in `.gitignore` — single-user, no conflicts.
+
+If your team wants to share the tree (remove it from `.gitignore`), the built-in optimistic lock helps:
+
+- Each node's `updated` field tracks the last write timestamp (minute-level).
+- When `upsert-node` modifies an existing node, it compares the `updated` value it read against the current file. If someone else wrote in between, a **WARNING** is printed to stderr.
+- The write still proceeds (non-blocking) — the warning tells you to review the node for conflicting edits.
+
+Since every node is a separate `.md` file keyed by id, Git merge conflicts are naturally rare. In practice:
+
+1. **Different nodes** → no conflict at all.
+2. **Same node, different fields** → Git auto-merges most of the time.
+3. **Same node, same field** → Git conflict marker; resolve manually (it's one small file).
+
+Recommended practice for teams: treat the tree like code — commit often, pull before writing.
+
 ## Obsidian (optional)
 
 Nodes and sessions already contain `[[wikilinks]]`. Open `.discussion/` as an Obsidian vault to get Graph View, backlinks, and quick navigation for free.

@@ -298,7 +298,7 @@ def root_note(project_name: str) -> str:
         kind="root",
         status="active",
         created=today,
-        updated=today,
+        updated=now_datetime(),
         summary="写这里：这个项目最原始、最朴素的目标到底是什么。",
         why="这就是整棵树的根。后面所有方向都应该从这里长出来。",
     )
@@ -864,14 +864,27 @@ def update_node_file(
     why: str | None = None,
     next_items: list[str] | None = None,
     related_session_link: str | None = None,
+    expect_updated: str | None = None,
 ) -> Path:
     nodes_dir = discussion_root / "nodes"
     path = nodes_dir / f"{node_id}.md"
     today = now_date()
+    now_ts = now_datetime()
     discovered_order: list[str] = []
 
     if path.exists():
         meta, discovered_order, sections = load_node_document(path)
+        # Optimistic lock: warn if the file was modified since the caller last saw it
+        if expect_updated is not None:
+            actual_updated = str(meta.get("updated", "")).strip()
+            if actual_updated and actual_updated != expect_updated.strip():
+                import sys
+                print(
+                    f"WARNING: node '{node_id}' was updated by another session "
+                    f"(expected updated={expect_updated}, actual={actual_updated}). "
+                    f"Proceeding — review the node for conflicting edits.",
+                    file=sys.stderr,
+                )
     else:
         initial_title = (title or node_id).strip() or node_id
         initial_parent = "" if node_id == "root-goal" else (parent or "root-goal").strip()
@@ -884,13 +897,13 @@ def update_node_file(
             "kind": "root" if node_id == "root-goal" else (kind or "idea").strip(),
             "status": (status or "active").strip(),
             "created": today,
-            "updated": today,
+            "updated": now_ts,
         }
         sections = {section: "" for section in NODE_SECTION_ORDER}
 
     meta["id"] = node_id
     meta.setdefault("created", today)
-    meta["updated"] = today
+    meta["updated"] = now_ts
 
     if title is not None and title.strip():
         meta["title"] = title.strip()
@@ -957,6 +970,7 @@ def upsert_node(
     old_summary = ""
     old_status = ""
     old_kind = ""
+    old_updated = ""
     if not is_new:
         raw = node_path.read_text(encoding="utf-8")
         old_meta, old_body = parse_frontmatter(raw)
@@ -964,6 +978,7 @@ def upsert_node(
         old_summary = old_sections.get("Summary", "").strip()
         old_status = str(old_meta.get("status", "")).strip()
         old_kind = str(old_meta.get("kind", "")).strip()
+        old_updated = str(old_meta.get("updated", "")).strip()
 
     path = update_node_file(
         discussion_root=discussion_root,
@@ -975,6 +990,7 @@ def upsert_node(
         summary=summary,
         why=why,
         next_items=next_items,
+        expect_updated=old_updated if old_updated else None,
     )
     rebuild_views(discussion_root, project_root, discussion_dir, project_name)
 
