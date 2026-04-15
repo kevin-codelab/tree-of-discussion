@@ -2,7 +2,23 @@
 
 AI-maintained discussion tree for long-running projects.
 
-Tracks goals, directions, decisions, and open questions across sessions. Lets both humans and AI restore context cheaply.
+## The problem
+
+When you vibe-code with AI over weeks or months, three things reliably go wrong:
+
+1. **AI forgets the original goal.** It drifts into whatever the latest message implies.
+2. **Nobody remembers what's decided.** Which ideas were accepted? Which were rejected? Which changed since last week? Both you and the AI lose track.
+3. **Correcting drift is expensive.** You end up scrolling through massive chat histories, manually summarizing context, and re-feeding it to the AI.
+
+## What this does
+
+`tree-of-discussion` keeps a structured Markdown tree alongside your project. The AI maintains it automatically during conversations — recording goals, directions, decisions, open questions, and their changes over time.
+
+Next session, the AI reads the tree and picks up where you left off. No manual context recovery.
+
+- **Humans** open `tree.md` — see the current state in 5 seconds
+- **AI** reads `context.md` — gets structured recovery with drift detection
+- **Both** can trace how decisions evolved via `log.md`
 
 ## What it generates
 
